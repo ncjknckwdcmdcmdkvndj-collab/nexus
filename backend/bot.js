@@ -31,11 +31,33 @@ client.on('ready', async () => {
     console.error('Error updating bot status:', error);
   }
 
+  // Sync bot emojis to database
+  await syncBotEmojis();
+
   // Set bot activity
   client.user.setActivity('servers', { type: 'WATCHING' });
 });
 
-// Guild join - register server
+// Sync bot emojis to database
+async function syncBotEmojis() {
+  try {
+    console.log('📦 Syncing bot emojis...');
+    const emojis = client.emojis.cache;
+
+    for (const emoji of emojis.values()) {
+      await pool.query(
+        'INSERT INTO bot_emojis (emoji_id, name, url, animated) VALUES ($1, $2, $3, $4) ON CONFLICT (emoji_id) DO UPDATE SET name = $2, url = $3, animated = $4',
+        [emoji.id, emoji.name, emoji.url, emoji.animated]
+      );
+    }
+
+    console.log(`✅ Synced ${emojis.size} bot emojis`);
+  } catch (error) {
+    console.error('Error syncing bot emojis:', error);
+  }
+}
+
+// Guild join - register server and sync emojis
 client.on('guildCreate', async (guild) => {
   console.log(`🟢 Joined guild: ${guild.name} (${guild.id})`);
 
@@ -47,10 +69,32 @@ client.on('guildCreate', async (guild) => {
     );
 
     console.log(`📝 Server registered: ${result.rows[0].name}`);
+
+    // Sync server emojis
+    await syncServerEmojis(guild, result.rows[0].id);
   } catch (error) {
     console.error('Error registering guild:', error);
   }
 });
+
+// Sync server emojis to database
+async function syncServerEmojis(guild, serverId) {
+  try {
+    console.log(`📦 Syncing emojis for ${guild.name}...`);
+    const emojis = guild.emojis.cache;
+
+    for (const emoji of emojis.values()) {
+      await pool.query(
+        'INSERT INTO server_emojis (server_id, emoji_id, name, url, animated) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (server_id, emoji_id) DO UPDATE SET name = $3, url = $4, animated = $5',
+        [serverId, emoji.id, emoji.name, emoji.url, emoji.animated]
+      );
+    }
+
+    console.log(`✅ Synced ${emojis.size} server emojis for ${guild.name}`);
+  } catch (error) {
+    console.error('Error syncing server emojis:', error);
+  }
+}
 
 // Guild leave - deactivate server
 client.on('guildDelete', async (guild) => {
@@ -81,6 +125,21 @@ client.on('guildMemberAdd', async (member) => {
     }
   } catch (error) {
     console.error('Error tracking member join:', error);
+  }
+});
+
+// Guild update - sync emojis when they change
+client.on('guildUpdate', async (oldGuild, newGuild) => {
+  // Check if emojis have changed
+  if (oldGuild.emojis.cache.size !== newGuild.emojis.cache.size) {
+    try {
+      const guild = await pool.query('SELECT id FROM servers WHERE discord_id = $1', [newGuild.id]);
+      if (guild.rows.length > 0) {
+        await syncServerEmojis(newGuild, guild.rows[0].id);
+      }
+    } catch (error) {
+      console.error('Error syncing updated server emojis:', error);
+    }
   }
 });
 
