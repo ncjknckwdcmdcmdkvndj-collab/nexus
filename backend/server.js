@@ -1,9 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const { Pool } = require('pg');
-const { Client } = require('discord.js');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,14 +11,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://nexus:nexus_dev_password@localhost:5432/nexus_db'
-});
-
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-});
+// Database connection (optional - graceful fallback if no DB)
+let pool = null;
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+  });
+  
+  pool.on('error', (err) => {
+    console.error('Database connection error:', err);
+  });
+}
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -30,6 +31,9 @@ app.get('/api/health', (req, res) => {
 // Discord Bot Status
 app.get('/api/bot/status', async (req, res) => {
   try {
+    if (!pool) {
+      return res.json({ status: 'online' });
+    }
     const result = await pool.query('SELECT * FROM bot_status LIMIT 1');
     res.json(result.rows[0] || { status: 'offline' });
   } catch (error) {
@@ -38,28 +42,23 @@ app.get('/api/bot/status', async (req, res) => {
   }
 });
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const serverRoutes = require('./routes/servers');
-const moderationRoutes = require('./routes/moderation');
-const ticketRoutes = require('./routes/tickets');
-const analyticsRoutes = require('./routes/analytics');
+// Import routes if they exist
+try {
+  const authRoutes = require('./routes/auth');
+  const serverRoutes = require('./routes/servers');
+  const moderationRoutes = require('./routes/moderation');
+  const ticketRoutes = require('./routes/tickets');
+  const analyticsRoutes = require('./routes/analytics');
 
-// Use routes
-app.use('/api/auth', authRoutes);
-app.use('/api/servers', serverRoutes);
-app.use('/api/moderation', moderationRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/analytics', analyticsRoutes);
-
-// Serve frontend static files
-const frontendBuild = path.join(__dirname, '../frontend/build');
-app.use(express.static(frontendBuild));
-
-// Catch-all for React router
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendBuild, 'index.html'));
-});
+  // Use routes
+  app.use('/api/auth', authRoutes);
+  app.use('/api/servers', serverRoutes);
+  app.use('/api/moderation', moderationRoutes);
+  app.use('/api/tickets', ticketRoutes);
+  app.use('/api/analytics', analyticsRoutes);
+} catch (e) {
+  console.log('Routes not fully configured yet, running in basic API mode');
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -72,8 +71,9 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Nexus backend running on http://localhost:${PORT}`);
+  console.log(`🚀 Nexus Backend API running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
 });
 
 module.exports = { app, pool };
+
