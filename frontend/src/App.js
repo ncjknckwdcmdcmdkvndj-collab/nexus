@@ -10,6 +10,7 @@ import ServerPanel from './pages/ServerPanel';
 import Moderation from './pages/Moderation';
 import Tickets from './pages/Tickets';
 import Analytics from './pages/Analytics';
+import Emojis from './pages/Emojis';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -86,6 +87,10 @@ function App() {
         <Route
           path="/server/:serverId/analytics"
           element={isAuthenticated ? <Analytics user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/server/:serverId/emojis"
+          element={isAuthenticated ? <Emojis user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
