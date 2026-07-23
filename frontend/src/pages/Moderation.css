@@ -1,0 +1,111 @@
+.moderation-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: #1a1a1a;
+  border-bottom: 1px solid #333333;
+  padding: 20px 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.back-btn {
+  background: #333333;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.moderation-container h2 {
+  margin-bottom: 20px;
+}
+
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.queue-item {
+  background: #1a1a1a;
+  border: 1px solid #333333;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-content h3 {
+  margin-bottom: 10px;
+}
+
+.item-content p {
+  color: #999999;
+  margin-bottom: 5px;
+}
+
+.confidence {
+  font-weight: bold;
+  color: #5865f2;
+}
+
+.item-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.action-btn.warn {
+  background: #f59e0b;
+  color: white;
+}
+
+.action-btn.warn:hover {
+  background: #d97706;
+}
+
+.action-btn.timeout {
+  background: #ef4444;
+  color: white;
+}
+
+.action-btn.timeout:hover {
+  background: #dc2626;
+}
+
+.action-btn.ignore {
+  background: #6b7280;
+  color: white;
+}
+
+.action-btn.ignore:hover {
+  background: #4b5563;
+}
+
+.loading,
+.empty-state {
+  text-align: center;
+  color: #999999;
+  padding: 40px;
+}

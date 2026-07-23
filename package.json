@@ -1,0 +1,22 @@
+{
+  "name": "nexus-bot",
+  "version": "0.1.0",
+  "description": "Discord bot admin panel with moderation, tickets, and server management",
+  "main": "server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd backend && nodemon server.js",
+    "client:dev": "cd frontend && npm start",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd frontend && npm run build",
+    "build:server": "echo 'Backend ready'",
+    "start": "cd backend && node server.js",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}
