@@ -102,12 +102,48 @@ CREATE TABLE IF NOT EXISTS bot_status (
   last_heartbeat TIMESTAMP DEFAULT NOW()
 );
 
+-- Bot emojis
+CREATE TABLE IF NOT EXISTS bot_emojis (
+  id SERIAL PRIMARY KEY,
+  emoji_id VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  url TEXT,
+  animated BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Server emojis
+CREATE TABLE IF NOT EXISTS server_emojis (
+  id SERIAL PRIMARY KEY,
+  server_id INTEGER REFERENCES servers(id),
+  emoji_id VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  url TEXT,
+  animated BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(server_id, emoji_id)
+);
+
+-- Favorite emojis
+CREATE TABLE IF NOT EXISTS favorite_emojis (
+  id SERIAL PRIMARY KEY,
+  server_id INTEGER REFERENCES servers(id),
+  emoji_id VARCHAR(255) NOT NULL,
+  emoji_name VARCHAR(255),
+  emoji_url TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(server_id, emoji_id)
+);
+
 -- Indexes
 CREATE INDEX idx_servers_discord_id ON servers(discord_id);
 CREATE INDEX idx_users_discord_id ON users(discord_id);
 CREATE INDEX idx_messages_server_id ON messages(server_id);
 CREATE INDEX idx_moderation_logs_server_id ON moderation_logs(server_id);
 CREATE INDEX idx_tickets_server_id ON tickets(server_id);
+CREATE INDEX idx_bot_emojis_name ON bot_emojis(name);
+CREATE INDEX idx_server_emojis_server_id ON server_emojis(server_id);
+CREATE INDEX idx_favorite_emojis_server_id ON favorite_emojis(server_id);
 `;
 
 async function runMigrations() {
